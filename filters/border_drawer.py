@@ -17,9 +17,8 @@ def draw_borders_and_labels(img):
 
     def I(x): return (int(x[0]), int(x[1]))
 
-    # ----------------------------------------
+
     # BORDER LENGTHS (proportional)
-    # ----------------------------------------
     TLW = w * 0.20
     TLH = h * 0.20
     TRW = w * 0.20
@@ -29,39 +28,31 @@ def draw_borders_and_labels(img):
     
     BRH = h * 0.18
 
-    # ----------------------------------------
     # 1) TOP LEFT
-    # ----------------------------------------
     draw.line(I((margin_x, margin_y)) + I((margin_x + TLW, margin_y)), fill=color, width=thick)
     draw.line(I((margin_x, margin_y)) + I((margin_x, margin_y + TLH)), fill=color, width=thick)
 
-    # ----------------------------------------
+
     # 2) TOP RIGHT
-    # ----------------------------------------
     tx = w - margin_x
     ty = margin_y
     draw.line(I((tx, ty)) + I((tx - TRW, ty)), fill=color, width=thick)
     draw.line(I((tx, ty)) + I((tx, ty + TRH)), fill=color, width=thick)
 
-    # ----------------------------------------
     # 3) BOTTOM LEFT
-    # ----------------------------------------
     bx = margin_x
     by = h - margin_y
     draw.line(I((bx, by)) + I((bx + BLW, by)), fill=color, width=thick)
     draw.line(I((bx, by)) + I((bx, by - BLH)), fill=color, width=thick)
 
-    # ----------------------------------------
+
     # 4) BOTTOM RIGHT
-    # ----------------------------------------
     brx = w - margin_x
     bry = h - margin_y
     draw.line(I((brx, bry)) + I((brx - TRW, bry)), fill=color, width=thick)
     draw.line(I((brx, bry)) + I((brx, bry - BRH)), fill=color, width=thick)
 
-    # ----------------------------------------
     # FONT
-    # ----------------------------------------
     try:
         font = ImageFont.truetype("DejaVuSansMono.ttf", int(min(w, h) * 0.024))
     except:
@@ -69,9 +60,7 @@ def draw_borders_and_labels(img):
 
     pad = int(min(w, h) * 0.012)
 
-    # ----------------------------------------
     # TOP LEFT TEXT (INSIDE)
-    # ----------------------------------------
     date_text = "2025-04-10"
 
     draw.text(
@@ -81,14 +70,10 @@ def draw_borders_and_labels(img):
         font=font
     )
 
-    # ----------------------------------------
     # TOP RIGHT (EMPTY INSIDE)
-    # ----------------------------------------
     # No text here by your request
 
-    # ----------------------------------------
     # TOP BATTERY (CENTERED, OUTSIDE)
-    # ----------------------------------------
     percent_text = "69%"
     pw, ph = text_size(draw, percent_text, font)
 
@@ -99,9 +84,7 @@ def draw_borders_and_labels(img):
     battery_y = margin_y - ph/2   # aligns with border height
     draw.text(I((mid_x - pw/2, battery_y)), percent_text, fill=color, font=font)
 
-    # ----------------------------------------
     # BOTTOM LEFT (INSIDE)
-    # ----------------------------------------
     bl_label = "PICSART X KHACH"
     lw, lh = text_size(draw, bl_label, font)
 
@@ -114,9 +97,7 @@ def draw_borders_and_labels(img):
         font=font
     )
 
-    # ----------------------------------------
     # BOTTOM CENTER (CENTERED)
-    # ----------------------------------------
     label1 = "2025"
     label2 = "PAX"
 

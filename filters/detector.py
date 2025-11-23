@@ -1,8 +1,14 @@
 from ultralytics import YOLO
 import numpy as np
 
+# Face model
 MODEL_FACE_PATH = "models/yolov8n-face.pt"
-model_face = YOLO(MODEL_FACE_PATH)  
+model_face = YOLO(MODEL_FACE_PATH)
+
+# Body model (COCO detector)
+MODEL_BODY_PATH = "models/yolo11n.pt"
+model_body = YOLO(MODEL_BODY_PATH)
+
 
 # MODEL_FACE_PATH = "models/yolo11n-face.pt"
 # model_face = YOLO(MODEL_FACE_PATH)   

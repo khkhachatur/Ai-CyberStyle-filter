@@ -55,19 +55,19 @@ def draw_face_box(image_pil, bbox):
     ratio = face_area / img_area
     mid_len = 30
     corner = 40
-
+   
     if ratio < 0.03:
-        t = 3   # thin lines - face far
+        t = 3   
     elif ratio < 0.08:
-        t = 5   # medium
+        t = 5   
     else:
         t = 7   
         
-    if ratio < 0.03:        # very far face
+    if ratio < 0.03:        
         mid_len = 7
-    elif ratio < 0.08:      # medium distance
+    elif ratio < 0.08:      
         mid_len = 20
-    else:                   # close face
+    else:                   
         mid_len = 30
 
 
@@ -124,13 +124,6 @@ def render_face_frame(face_crop, target_width=450):
     padding = 20
     frame_w = target_width + padding * 2
     frame_h = new_h + padding * 2
-
-    # -------------------------------------------------------
-    # Thickness auto-adjust based on face crop size
-    # -------------------------------------------------------
-    ratio = (target_width * new_h) / (frame_w * frame_h)
-
-  
 
     frame = Image.new("RGB", (frame_w, frame_h), (0, 0, 0))
     frame.paste(face_resized, (padding, padding))

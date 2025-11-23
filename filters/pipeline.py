@@ -4,6 +4,9 @@ import os
 from filters.stylistic_filters import apply_stylistic_pipeline
 from filters.border_drawer import draw_borders_and_labels
 
+from filters.detector import detect_face, model_face, model_body
+from filters.body_frame import detect_body, draw_body_box
+
 from filters.detector import detect_face
 from filters.face_frame import (
     draw_face_box,
@@ -12,26 +15,24 @@ from filters.face_frame import (
 )
 
 def apply_ai_overlay(image_pil):
-    """
-    Detects face, draws box, generates face-frame image.
-    Returns:
-        (main_image_with_box, face_frame_image)
-    """
-    bbox = detect_face(image_pil)
+    face_bbox = detect_face(image_pil)
+    body_bbox = detect_body(image_pil, model_body)
 
-    if bbox is None:
-        return image_pil, None
+    out = image_pil
 
-    # Draw green rectangle
-    img_with_box = draw_face_box(image_pil, bbox)
+    if body_bbox:
+        out = draw_body_box(out, body_bbox, face_bbox)
 
-    # Extract and crop face
-    face_crop = extract_face_crop(image_pil, bbox)
+    if face_bbox:
+        out = draw_face_box(out, face_bbox)
 
-    # Render green face window
-    face_frame = render_face_frame(face_crop)
+    face_crop = extract_face_crop(image_pil, face_bbox) if face_bbox else None
+    face_frame = render_face_frame(face_crop) if face_crop else None
 
-    return img_with_box, face_frame
+    return out, face_frame
+
+
+
 
 
 def save_filtered_image(img, src_path):
