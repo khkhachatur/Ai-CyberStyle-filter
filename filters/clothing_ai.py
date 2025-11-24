@@ -1,12 +1,22 @@
-# filters/clothing_ai.py
-
 import os
 import io
 import json
 import base64
+from dotenv import load_dotenv
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+load_dotenv()
+
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    raise RuntimeError(
+        "OPENAI_API_KEY is missing. "
+        "Create a .env file in project root:\n\n"
+        "OPENAI_API_KEY=sk-xxxxx\n"
+    )
+
+client = OpenAI(api_key=api_key)
 
 PROMPT = (
     "You are a fashion assistant. Look at the person in the image and "
@@ -17,14 +27,8 @@ PROMPT = (
     "{\"top\": \"red polo shirt\", \"bottom\": \"light denim shorts\"}"
 )
 
-
 def analyze_clothing_with_gpt(body_crop_pil):
-    """
-    Takes a PIL Image (body crop) and returns (top_text, bottom_text)
-    based on GPT-4o-mini Vision analysis.
-    """
-
-    # Encode image to base64 (no temp file needed)
+    # Convert crop to base64
     buf = io.BytesIO()
     body_crop_pil.save(buf, format="JPEG")
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
@@ -45,26 +49,18 @@ def analyze_clothing_with_gpt(body_crop_pil):
         ],
     )
 
-    # Extract text content robustly
-    content = response.choices[0].message.content
-    if isinstance(content, str):
-        raw = content
-    else:
-        # content is usually a list of parts; join any text fields
-        raw = "".join(getattr(part, "text", "") for part in content)
+    raw = response.choices[0].message.content
 
-    top = "AI generated top"
-    bottom = "AI generated bottom"
+    top = "AI GENERATED TOP"
+    bottom = "AI GENERATED BOTTOM"
 
     try:
         data = json.loads(raw)
-        if isinstance(data, dict):
-            if "top" in data:
-                top = str.upper((data["top"]))
-            if "bottom" in data:
-                bottom = str.upper((data["bottom"]))
-    except Exception:
-        # If JSON parse fails, just fall back to defaults
+        if "top" in data:
+            top = data["top"].upper()
+        if "bottom" in data:
+            bottom = data["bottom"].upper()
+    except:
         pass
 
     return top, bottom
