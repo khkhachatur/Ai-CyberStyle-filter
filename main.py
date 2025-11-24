@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 
 from tkinter import Tk, ttk, messagebox, filedialog
 from ui.filter_ui import attach_filter_ui

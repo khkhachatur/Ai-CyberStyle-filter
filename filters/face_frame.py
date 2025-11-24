@@ -45,9 +45,7 @@ def draw_face_box(image_pil, bbox):
     out = image_pil.copy()
     draw = ImageDraw.Draw(out)
 
-    # -------------------------------------------------------
     # Thickness auto-adjusting based on face size in image
-    # -------------------------------------------------------
     face_w = sx2 - sx1
     face_h = sy2 - sy1
     face_area = face_w * face_h
@@ -57,11 +55,11 @@ def draw_face_box(image_pil, bbox):
     corner = 40
    
     if ratio < 0.03:
-        t = 3   
+        t = 2   
     elif ratio < 0.08:
-        t = 5   
+        t = 3
     else:
-        t = 7   
+        t = 4
         
     if ratio < 0.03:        
         mid_len = 7

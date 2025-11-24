@@ -1,5 +1,7 @@
+# filters/body_frame.py
+
 from PIL import ImageDraw, ImageFont
-from filters.face_frame import _make_square_bbox, GREEN
+from filters.face_frame import _make_square_bbox, GREEN  # _make_square_bbox unused but kept
 
 def detect_body(image_pil, yolo_model):
     import numpy as np
@@ -25,6 +27,9 @@ def detect_body(image_pil, yolo_model):
 
 
 def _make_body_bbox(x1, y1, x2, y2, image_w, image_h, pad_ratio=0.10):
+    """
+    Rectangular padded bbox for full body (no squaring).
+    """
     bw = x2 - x1
     bh = y2 - y1
 
@@ -39,8 +44,18 @@ def _make_body_bbox(x1, y1, x2, y2, image_w, image_h, pad_ratio=0.10):
     return bx1, by1, bx2, by2
 
 
+def draw_body_box(
+    image_pil,
+    bbox,
+    face_bbox=None,
+    top_text="TOP: AI GENERATED TEXT",
+    bottom_text="BOTTOM: AI GENERATED TEXT",
+):
+    """
+    Draw HUD-styled body box + labels.
 
-def draw_body_box(image_pil, bbox, face_bbox=None):
+    `top_text` and `bottom_text` can be overridden (e.g. with GPT results).
+    """
     if bbox is None:
         return image_pil
 
@@ -49,6 +64,7 @@ def draw_body_box(image_pil, bbox, face_bbox=None):
 
     bx1, by1, bx2, by2 = _make_body_bbox(x1, y1, x2, y2, w, h, pad_ratio=0.10)
 
+    # avoid overlapping face bbox if provided
     if face_bbox is not None:
         fx1, fy1, fx2, fy2 = face_bbox
         if by1 < fy2:
@@ -65,78 +81,23 @@ def draw_body_box(image_pil, bbox, face_bbox=None):
         t = 2
         mid_len = 18
     else:
-        t = 4
+        t = 3
         mid_len = 30
 
+    # Body rectangle
     draw.rectangle((bx1, by1, bx2, by2), outline=GREEN, width=t)
 
-    # Decide side for labels
+    # Decide which side for labels (left/right of body)
     body_center_x = (bx1 + bx2) / 2
     image_center_x = w / 2
     labels_on_right = body_center_x < image_center_x
 
-    # Label box sizes
-    label_h = 35
-    label_w = 260
-    gap = 25
-
-    if labels_on_right:
-        label_x1 = bx2 + gap
-        label_x2 = label_x1 + label_w
-        connector_x = bx2
-    else:
-        label_x2 = bx1 - gap
-        label_x1 = label_x2 - label_w
-        connector_x = bx1
-
-    top_label_y1 = by1 + 40
-    bottom_label_y1 = top_label_y1 + label_h + 15
-
-    # Background rectangles
-    draw.rectangle((label_x1, top_label_y1, label_x2, top_label_y1 + label_h), fill=GREEN)
-    draw.rectangle((label_x1, bottom_label_y1, label_x2, bottom_label_y1 + label_h), fill=GREEN)
-
-def draw_body_box(image_pil, bbox, face_bbox=None):
-    if bbox is None:
-        return image_pil
-
-    x1, y1, x2, y2 = bbox
-    w, h = image_pil.size
-
-    bx1, by1, bx2, by2 = _make_body_bbox(x1, y1, x2, y2, w, h, pad_ratio=0.10)
-
-    if face_bbox is not None:
-        fx1, fy1, fx2, fy2 = face_bbox
-        if by1 < fy2:
-            by1 = fy2 + 20
-
-    out = image_pil.copy()
-    draw = ImageDraw.Draw(out)
-
-    side_len = bx2 - bx1
-    img_len = min(w, h)
-    ratio = side_len / img_len
-
-    if ratio < 0.15:
-        t = 2
-        mid_len = 18
-    else:
-        t = 4
-        mid_len = 30
-
-    draw.rectangle((bx1, by1, bx2, by2), outline=GREEN, width=t)
-
-    # where to place labels (left or right)
-    body_center_x = (bx1 + bx2) / 2
-    image_center_x = w / 2
-    labels_on_right = body_center_x < image_center_x
-
-    # label sizes
+    # Base label sizes
     base_label_w = 260
     label_h = 35
     gap = 25
 
-    # initial positions
+    # Initial label positions
     if labels_on_right:
         label_x1 = bx2 + gap
         label_x2 = label_x1 + base_label_w
@@ -149,7 +110,7 @@ def draw_body_box(image_pil, bbox, face_bbox=None):
     top_label_y1 = by1 + 40
     bottom_label_y1 = top_label_y1 + label_h + 15
 
-    # FIX 1 — Prevent label box from going outside image
+    # --- Keep labels inside the image width ---
     if label_x1 < 0:
         shift = -label_x1 + 10
         label_x1 += shift
@@ -160,19 +121,16 @@ def draw_body_box(image_pil, bbox, face_bbox=None):
         label_x1 -= shift
         label_x2 -= shift
 
-    # shrink label width if STILL overflowing
     label_w = label_x2 - label_x1
     if label_w < 200:
         label_w = 200
-
-    # recompute end X
     label_x2 = label_x1 + label_w
 
-    # FIX 2 — Text auto-fitting
+    # Font + auto-fit helper
     try:
-        font = ImageFont.truetype("arial.ttf", 22)
+        base_font = ImageFont.truetype("arial.ttf", 22)
     except:
-        font = ImageFont.load_default()
+        base_font = ImageFont.load_default()
 
     def draw_fitted_text(text, x, y):
         """Shrink text until it fits inside label_w."""
@@ -183,33 +141,48 @@ def draw_body_box(image_pil, bbox, face_bbox=None):
             except:
                 font_test = ImageFont.load_default()
 
-            bbox = draw.textbbox((0, 0), text, font=font_test)
-            tw = bbox[2] - bbox[0]
-            th = bbox[3] - bbox[1]
+            bbox_txt = draw.textbbox((0, 0), text, font=font_test)
+            tw = bbox_txt[2] - bbox_txt[0]
+            th = bbox_txt[3] - bbox_txt[1]
             if tw <= label_w - 20:  # padding
-                draw.text((x + 10, y + (label_h - th) // 2),
-                          text, fill=(0, 0, 0), font=font_test)
+                draw.text(
+                    (x + 10, y + (label_h - th) // 2),
+                    text,
+                    fill=(0, 0, 0),
+                    font=font_test,
+                )
                 return
             fsize -= 1
 
         # fallback
-        draw.text((x + 10, y + 5), text, fill=(0, 0, 0), font=font)
+        draw.text((x + 10, y + 5), text, fill=(0, 0, 0), font=base_font)
 
-    # Draw background rectangles
-    draw.rectangle((label_x1, top_label_y1, label_x2, top_label_y1 + label_h), fill=GREEN)
-    draw.rectangle((label_x1, bottom_label_y1, label_x2, bottom_label_y1 + label_h), fill=GREEN)
+    # Background rectangles
+    draw.rectangle(
+        (label_x1, top_label_y1, label_x2, top_label_y1 + label_h), fill=GREEN
+    )
+    draw.rectangle(
+        (label_x1, bottom_label_y1, label_x2, bottom_label_y1 + label_h), fill=GREEN
+    )
 
-    # Draw text with auto-fit
-    draw_fitted_text("TOP: AI GENERATED TEXT", label_x1, top_label_y1)
-    draw_fitted_text("BOTTOM: AI GENERATED TEXT", label_x1, bottom_label_y1)
+    # Use custom text if provided, otherwise fallback
+    top_label = top_text or "TOP: AI GENERATED TEXT"
+    bottom_label = bottom_text or "BOTTOM: AI GENERATED TEXT"
 
-    # Connector line (bottom label only)
+    draw_fitted_text(top_label, label_x1, top_label_y1)
+    draw_fitted_text(bottom_label, label_x1, bottom_label_y1)
+
+    # Connector from body box to bottom label
     body_mid_y = (by1 + by2) // 2
-
     draw.line(
-        (connector_x, body_mid_y + 20,
-         label_x1, bottom_label_y1 + label_h // 2),
-        fill=GREEN, width=t
+        (
+            connector_x,
+            body_mid_y + 20,
+            label_x1,
+            bottom_label_y1 + label_h // 2,
+        ),
+        fill=GREEN,
+        width=t,
     )
 
     return out

@@ -70,8 +70,6 @@ def draw_borders_and_labels(img):
         font=font
     )
 
-    # TOP RIGHT (EMPTY INSIDE)
-    # No text here by your request
 
     # TOP BATTERY (CENTERED, OUTSIDE)
     percent_text = "69%"
@@ -107,7 +105,7 @@ def draw_borders_and_labels(img):
     total_w = l1w + pad + l2w
     cx = w / 2 - total_w / 2
 
-    bottom_y = (h - margin_y) - l1h / 2   # <<< ALIGN WITH BORDER
+    bottom_y = (h - margin_y) - l1h / 2  
 
     draw.text(I((cx, bottom_y)), label1, fill=color, font=font)
     draw.text(I((cx + l1w + pad, bottom_y)), label2, fill=color, font=font)
