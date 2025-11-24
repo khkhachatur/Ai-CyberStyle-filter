@@ -157,6 +157,19 @@ def draw_body_box(
         # fallback
         draw.text((x + 10, y + 5), text, fill=(0, 0, 0), font=base_font)
 
+    # Connector from body box to bottom label
+    body_mid_y = (by1 + by2) // 2
+    draw.line(
+        (
+            connector_x,
+            body_mid_y + 20,
+            label_x1,
+            bottom_label_y1 + label_h // 2,
+        ),
+        fill=GREEN,
+        width=t,
+    )
+
     # Background rectangles
     draw.rectangle(
         (label_x1, top_label_y1, label_x2, top_label_y1 + label_h), fill=GREEN
@@ -171,18 +184,5 @@ def draw_body_box(
 
     draw_fitted_text(top_label, label_x1, top_label_y1)
     draw_fitted_text(bottom_label, label_x1, bottom_label_y1)
-
-    # Connector from body box to bottom label
-    body_mid_y = (by1 + by2) // 2
-    draw.line(
-        (
-            connector_x,
-            body_mid_y + 20,
-            label_x1,
-            bottom_label_y1 + label_h // 2,
-        ),
-        fill=GREEN,
-        width=t,
-    )
 
     return out
