@@ -85,7 +85,7 @@ def save_filtered_image(img, src_path):
 
 
 #  FULL PIPELINE
-def apply_filters_sequence(path, face_path=None):
+def apply_filters_sequence(path, face_path=None, id_value="UNKNOWN"):
     # 1) Load + style
     img = Image.open(path).convert("RGB")
     img = apply_stylistic_pipeline(img)
@@ -99,7 +99,8 @@ def apply_filters_sequence(path, face_path=None):
         main_face_bbox = detect_face(img)
         face_img = extract_face_crop(img, main_face_bbox) if main_face_bbox else None
 
-    face_card = make_face_card(face_img) if face_img is not None else None
+    face_card = make_face_card(face_img, id_value=id_value) if face_img is not None else None
+
 
     # 3) Decide PROFILE card placement
     labels_offset_y = None

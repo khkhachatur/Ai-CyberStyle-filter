@@ -144,6 +144,20 @@ class CyberFilterApp(ctk.CTk):
             text_color="gray80"
         )
         self.status_label.grid(row=1, column=0, padx=12, pady=(0, 10), sticky="w")
+        # ---- CUSTOM ID SECTION ----
+        ctk.CTkLabel(
+            actions,
+            text=None,
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).grid(row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+
+        self.custom_id_entry = ctk.CTkEntry(
+            actions,
+            placeholder_text="Enter ID (optional)",
+            height=32
+        )
+        self.custom_id_entry.grid(row=1, column=0, padx=12, pady=(0, 10), sticky="ew")
+
 
     def _build_right_panel(self):
         right = ctk.CTkFrame(self, corner_radius=16)
@@ -272,9 +286,12 @@ class CyberFilterApp(ctk.CTk):
         self.status_label.configure(text="Running pipeline...", text_color="#00ffb3")
         self.process_button.configure(state="disabled")
         
+        custom_id = self.custom_id_entry.get().strip().upper()
+
         out_path = apply_filters_sequence(
             self.main_image_path,
-            face_path=self.face_image_path
+            face_path=self.face_image_path,
+            id_value=custom_id if custom_id else "UNKNOWN"
         )
 
         print("Pipeline output path:", out_path)
