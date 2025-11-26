@@ -1,6 +1,7 @@
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw
 
 GREEN = (0, 255, 0)
+
 
 def _make_square_bbox(x1, y1, x2, y2, image_w, image_h, pad_ratio=0.15):
     bw = x2 - x1
@@ -35,7 +36,7 @@ def _make_square_bbox(x1, y1, x2, y2, image_w, image_h, pad_ratio=0.15):
 
 def draw_face_box(image_pil, bbox):
     """
-    Draw a HUD-styled green square face box on the main image.
+    HUD-styled green square box around the face.
     """
     x1, y1, x2, y2 = bbox
     w, h = image_pil.size
@@ -45,29 +46,21 @@ def draw_face_box(image_pil, bbox):
     out = image_pil.copy()
     draw = ImageDraw.Draw(out)
 
-    # Thickness auto-adjusting based on face size in image
     face_w = sx2 - sx1
     face_h = sy2 - sy1
     face_area = face_w * face_h
     img_area = w * h
     ratio = face_area / img_area
-    mid_len = 30
-    corner = 40
-   
+
     if ratio < 0.03:
-        t = 2   
+        t = 2
+        mid_len = 7
     elif ratio < 0.08:
         t = 3
+        mid_len = 20
     else:
         t = 4
-        
-    if ratio < 0.03:        
-        mid_len = 7
-    elif ratio < 0.08:      
-        mid_len = 20
-    else:                   
         mid_len = 30
-
 
     # Outer box
     draw.rectangle((sx1, sy1, sx2, sy2), outline=GREEN, width=t)
@@ -75,24 +68,24 @@ def draw_face_box(image_pil, bbox):
     cx = (sx1 + sx2) // 2
     cy = (sy1 + sy2) // 2
 
-    # Center ticks
+    # Side ticks
     draw.line((sx1, cy, sx1 + mid_len, cy), fill=GREEN, width=t)
     draw.line((sx2 - mid_len, cy, sx2, cy), fill=GREEN, width=t)
 
-    # DOUBLE HEADER (Top)
+    # Double top header
     header_height = t * 2
-    bar_length = (sx2 - sx1) * 0.55
+    bar_length = int((sx2 - sx1) * 0.55)
 
     draw.line(
-        (cx - bar_length//2, sy1 - header_height,
-         cx + bar_length//2, sy1 - header_height),
-        fill=GREEN, width=t
+        (cx - bar_length // 2, sy1 - header_height,
+         cx + bar_length // 2, sy1 - header_height),
+        fill=GREEN, width=t,
     )
 
     draw.line(
-        (cx - bar_length//2 + 20, sy1 - header_height - (t * 2),
-         cx + bar_length//2 - 20, sy1 - header_height - (t * 2)),
-        fill=GREEN, width=t
+        (cx - bar_length // 2 + 20, sy1 - header_height - (t * 2),
+         cx + bar_length // 2 - 20, sy1 - header_height - (t * 2)),
+        fill=GREEN, width=t,
     )
 
     return out
@@ -101,7 +94,6 @@ def draw_face_box(image_pil, bbox):
 def extract_face_crop(image_pil, bbox, padding=0.3):
     if bbox is None:
         return None
-
     w, h = image_pil.size
     x1, y1, x2, y2 = bbox
     sx1, sy1, sx2, sy2 = _make_square_bbox(x1, y1, x2, y2, w, h, pad_ratio=padding)
@@ -110,7 +102,8 @@ def extract_face_crop(image_pil, bbox, padding=0.3):
 
 def render_face_frame(face_crop, target_width=450):
     """
-    Returns a styled green HUD frame containing the face crop (square).
+    Simple black-framed square panel with the face.
+    (Currently not pasted on main image – you *can* use it later if needed.)
     """
     if face_crop is None:
         return None
