@@ -36,7 +36,9 @@ def _make_square_bbox(x1, y1, x2, y2, image_w, image_h, pad_ratio=0.15):
 
 def draw_face_box(image_pil, bbox):
     """
-    HUD-styled green square box around the face.
+    Draw HUD-styled green square box around the face.
+    Returns:
+        out_image, (sx1, sy1, sx2, sy2)
     """
     x1, y1, x2, y2 = bbox
     w, h = image_pil.size
@@ -72,23 +74,18 @@ def draw_face_box(image_pil, bbox):
     draw.line((sx1, cy, sx1 + mid_len, cy), fill=GREEN, width=t)
     draw.line((sx2 - mid_len, cy, sx2, cy), fill=GREEN, width=t)
 
-    # Double top header
+    # Header lines
     header_height = t * 2
     bar_length = int((sx2 - sx1) * 0.55)
 
-    draw.line(
-        (cx - bar_length // 2, sy1 - header_height,
-         cx + bar_length // 2, sy1 - header_height),
-        fill=GREEN, width=t,
-    )
+    draw.line((cx - bar_length // 2, sy1 - header_height,
+               cx + bar_length // 2, sy1 - header_height), fill=GREEN, width=t)
 
-    draw.line(
-        (cx - bar_length // 2 + 20, sy1 - header_height - (t * 2),
-         cx + bar_length // 2 - 20, sy1 - header_height - (t * 2)),
-        fill=GREEN, width=t,
-    )
+    draw.line((cx - bar_length // 2 + 20, sy1 - header_height - (t * 2),
+               cx + bar_length // 2 - 20, sy1 - header_height - (t * 2)), fill=GREEN, width=t)
 
-    return out
+    # RETURN BOTH IMAGE + FACE BOX
+    return out, (sx1, sy1, sx2, sy2)
 
 
 def extract_face_crop(image_pil, bbox, padding=0.3):
@@ -98,6 +95,7 @@ def extract_face_crop(image_pil, bbox, padding=0.3):
     x1, y1, x2, y2 = bbox
     sx1, sy1, sx2, sy2 = _make_square_bbox(x1, y1, x2, y2, w, h, pad_ratio=padding)
     return image_pil.crop((sx1, sy1, sx2, sy2))
+
 
 
 def render_face_frame(face_crop, target_width=450):
@@ -118,5 +116,6 @@ def render_face_frame(face_crop, target_width=450):
 
     frame = Image.new("RGB", (frame_w, frame_h), (0, 0, 0))
     frame.paste(face_resized, (padding, padding))
+    
 
     return frame
