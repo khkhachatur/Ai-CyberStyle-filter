@@ -56,13 +56,6 @@ def draw_body_box(
     bottom_text=None,
     labels_offset_y=None,
 ):
-    """
-    Draw HUD-styled body box + TOP/BOTTOM labels.
-
-    - `top_text` / `bottom_text`: label strings (e.g. GPT output)
-    - `labels_offset_y`: if provided, forces labels to start from that Y
-                         (used to place labels below the PROFILE card)
-    """
     if bbox is None:
         return image_pil
 
@@ -83,30 +76,29 @@ def draw_body_box(
     side_len = bx2 - bx1
     img_len = min(w, h)
     ratio = side_len / img_len
-    t = 3 if ratio >= 0.15 else 2  # line thickness
+    t = 3 if ratio >= 0.15 else 2
 
-    # --- BODY RECTANGLE ---
+    # Draw body bounding box
     draw.rectangle((bx1, by1, bx2, by2), outline=GREEN, width=t)
 
-    # --- WHICH SIDE FOR LABELS ---
+    # Decide label side
     body_center_x = (bx1 + bx2) / 2
-    image_center_x = w / 2
-    labels_on_right = body_center_x < image_center_x
+    labels_on_right = body_center_x < (w / 2)
 
+    # Label sizes
     base_label_w = 260
     label_h = 35
     gap = 25
 
+    # Compute label X positions
     if labels_on_right:
         label_x1 = bx2 + gap
         label_x2 = label_x1 + base_label_w
-        connector_x = bx2
     else:
         label_x2 = bx1 - gap
         label_x1 = label_x2 - base_label_w
-        connector_x = bx1
 
-    # --- LABEL Y POSITIONS ---
+    # Y positions of labels
     if labels_offset_y is not None:
         top_label_y1 = labels_offset_y
     else:
@@ -114,14 +106,14 @@ def draw_body_box(
 
     bottom_label_y1 = top_label_y1 + label_h + 15
 
-    # --- CLAMP LABELS INSIDE IMAGE WIDTH ---
+    # Clamp inside image bounds
     if label_x1 < 0:
         shift = -label_x1 + 10
         label_x1 += shift
         label_x2 += shift
 
     if label_x2 > w:
-        shift = label_x2 - w + 10
+        shift = (label_x2 - w) + 10
         label_x1 -= shift
         label_x2 -= shift
 
@@ -130,40 +122,49 @@ def draw_body_box(
         label_w = 200
     label_x2 = label_x1 + label_w
 
-    # --- CONNECTOR LINE (BEHIND LABELS) ---
+    # ---- FINAL CONNECTOR LOGIC (correct) ----
     body_mid_y = (by1 + by2) // 2
+    label_mid_y = bottom_label_y1 + label_h // 2
+
+    if labels_on_right:
+        # Labels on right → start at RIGHT side, end at LEFT side
+        connector_start_x = bx2
+        connector_end_x = label_x1
+    else:
+        # Labels on left → start at LEFT side, end at RIGHT side
+        connector_start_x = bx1
+        connector_end_x = label_x2
+
     draw.line(
-        (connector_x, body_mid_y + 20, label_x1, bottom_label_y1 + label_h // 2),
-        fill=GREEN,
-        width=t,
+        (connector_start_x, body_mid_y + 20,
+         connector_end_x, label_mid_y),
+        fill=GREEN, width=t
     )
 
-    # --- LABEL BACKGROUNDS ---
+    # Draw label backgrounds
     draw.rectangle(
         (label_x1, top_label_y1, label_x2, top_label_y1 + label_h),
-        fill=GREEN,
+        fill=GREEN
     )
     draw.rectangle(
         (label_x1, bottom_label_y1, label_x2, bottom_label_y1 + label_h),
-        fill=GREEN,
+        fill=GREEN
     )
 
-    # --- TEXT DRAWING ---
+    # Draw text
     def draw_fitted_text(text, x, y):
         if not text:
             return
         for fsize in range(22, 10, -1):
             try:
                 font = ImageFont.truetype("arial.ttf", fsize)
-            except Exception:
+            except:
                 font = ImageFont.load_default()
-            tb = draw.textbbox((0, 0), text, font=font)
+            tb = draw.textbbox((0,0), text, font=font)
             if tb[2] - tb[0] <= label_w - 20:
-                draw.text((x + 10, y + 5), text, fill=(0, 0, 0), font=font)
+                draw.text((x+10, y+5), text, fill=(0,0,0), font=font)
                 return
-
-        # fallback
-        draw.text((x + 10, y + 5), text, fill=(0, 0, 0), font=font)
+        draw.text((x+10, y+5), text, fill=(0,0,0), font=font)
 
     top_label = top_text or "TOP: AI GENERATED TEXT"
     bottom_label = bottom_text or "BOTTOM: AI GENERATED TEXT"
